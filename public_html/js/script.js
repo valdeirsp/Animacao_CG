@@ -44,7 +44,7 @@ function init() {
 	*/
 
 	//FOV: % de abertura da camera, de 0 .. 100
-	var FOV = 45, 
+	var FOV = 100, 
 		NEAR = 0.1,
 		FAR = 20000;
 	camera = new THREE.PerspectiveCamera(FOV, WIDTH / HEIGHT, NEAR, FAR);
@@ -91,8 +91,8 @@ function init() {
 	
 	////////////
 	// CUSTOM //
-	var directions  = ["esquerdo_", "direito_", "ceu_", "solo_", "tras_", "frente_"];
-	var imageSuffix = ".jpg";
+	var directions  = ["esquerdo", "direito", "ceu", "solo", "tras", "frente"];
+	var imageSuffix = ".png";
 	var skyGeometry = new THREE.CubeGeometry( 5000, 5000, 5000 );	
 	
 	var materialArray = [];
