@@ -31,6 +31,7 @@ var clock = new THREE.Clock();
 
 var animating = false;
 var cannonmoved = false;
+var step = 0;
 
 function init() {
 	console.log ("Inicializando");
@@ -126,7 +127,15 @@ function update() {
 			cannonmoved = true;
 			cannon.position.x -= 115;
 		}
-		shot();
+		if (bullet.position.distanceTo(moon.position) > 200) {
+			shot();
+		}
+		console.log(bullet.position.distanceTo(moon.position));
+	}
+
+	if (bullet.position.distanceTo(moon.position) < 200) {
+
+		shakeMoon(moon.position.x, moon.position.y, moon.position.z);
 	}
 	
 	controls.update();
@@ -236,10 +245,15 @@ function shot() {
 	animating = false;
 }
 
-function collisionDetector() {
-	
-	if (bullet.position.x == moon.position.x &&
-		bullet.position.y == moon.position.y) {
-		console.log('Colidiu!!');
-	}
+function shakeMoon(x, y, z) {
+    
+    var deslocamento = 15;
+        
+        if (step % 2 == 0) {
+            moon.position.set(x - deslocamento, y - deslocamento, z - deslocamento);
+        } else {
+            moon.position.set(x + deslocamento, y + deslocamento, z + deslocamento);
+        }
+        
+        step++;
 }
