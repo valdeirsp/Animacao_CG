@@ -17,7 +17,11 @@ var scene,
 	camera,
 	renderer;
 
-var controls;
+var bullet,
+	cannon,
+	moon;
+
+var controls, cannonControls;
 
 // Elemento que conterá o canvas
 var container; 
@@ -27,7 +31,6 @@ var clock = new THREE.Clock();
 
 function init() {
 	console.log ("Inicializando");
-	debugger;
 
 	/*
 	* Preparação da cena
@@ -35,7 +38,7 @@ function init() {
 	scene = new THREE.Scene();
 	var WIDTH = window.innerWidth,
 		HEIGHT = window.innerHeight;
-	
+
 	/*
 	* Definindo os parâmetros da câmera
 	*/
@@ -44,7 +47,7 @@ function init() {
 		NEAR = 0.1,
 		FAR = 20000;
 	camera = new THREE.PerspectiveCamera(FOV, WIDTH / HEIGHT, NEAR, FAR);
-	camera.position.set(0,150,400);
+	camera.position.set(100, 100, 500);
 	camera.lookAt(scene.position);	
 	
 	if ( Detector.webgl )
@@ -68,7 +71,7 @@ function init() {
 	scene.add(light);
         
     //imagem dentro da skybox!
-	var floorTexture = new THREE.ImageUtils.loadTexture( 'images/checkerboard.jpg' );
+	/*var floorTexture = new THREE.ImageUtils.loadTexture( 'images/checkerboard.jpg' );
 	floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping; 
 	floorTexture.repeat.set( 10, 10 );
 	var floorMaterial = new THREE.MeshBasicMaterial( { map: floorTexture, side: THREE.DoubleSide } );
@@ -76,7 +79,7 @@ function init() {
 	var floor = new THREE.Mesh(floorGeometry, floorMaterial);
 	floor.position.y = -0.5;
 	floor.rotation.x = Math.PI / 2;
-	scene.add(floor);
+	scene.add(floor);*/
 	
 	/*
 	* Adiciona o skybox na cena
@@ -95,7 +98,26 @@ function init() {
 	var skyBox = new THREE.Mesh( skyGeometry, skyMaterial );
 	scene.add( skyBox );
 
+	/*
+	* Luz ambiente para a cena
+	*/
+	var ambientLight = new THREE.AmbientLight(0xbbbbbb);
+    scene.add(ambientLight);
+
+	/*
+	* Carrega e define a bala
+	*/
+	debugger;
+	loadBullet();
+	
+	/*
+	* Carrega e define a lua
+	*/
 	loadMoon();
+
+
+	//loadCannon();
+
 }
 
 function animate() {
@@ -110,25 +132,60 @@ function update() {
 	}
 	
 	controls.update();
+	cannonControls.update();
 }
 
 function render() {
 	renderer.render( scene, camera );
 }
 
+function loadBullet() {
+
+	var bulletLoader = new THREE.JSONLoader();
+
+    // load a resource
+    bulletLoader.load('model/bullet.json', function ( geometry ) {
+    	var material = new THREE.MeshBasicMaterial({
+    		map: THREE.ImageUtils.loadTexture('model/bulletTexture.jpg')
+    	});
+        
+        bullet = new THREE.Mesh( geometry, material );
+       	bullet.position.set(1000, -500, -600);
+    	bullet.scale.set(100, 100, 100);
+    	scene.add( bullet );
+    });
+}
+
+function loadCannon() {
+
+	var cannonLoader = new THREE.JSONLoader();
+	var cannon;
+
+    cannonLoader.load('model/cannon.json', function ( geometry ) {
+    	var material = new THREE.MeshBasicMaterial();
+        
+        cannon = new THREE.Mesh( geometry, material );
+
+        cannon.position.set(-500, -500, -50);
+    	cannon.scale.set(180, 180, 180);
+    	scene.add( cannon );
+    	cannonControls = new THREE.OrbitControls( cannon, renderer.domElement );
+    });
+}
+
 function loadMoon() {
 	//configurando as variáveis da esfera
- 	var radius = 50,
+ 	var radius = 150,
  		segments = 16,
  		rings = 16;
  
-	//criando o material da esfera, inicialmente será apenas o wireframe
  	var sphereMaterial = new THREE.MeshLambertMaterial({
         map: THREE.ImageUtils.loadTexture('model/texturaLua.jpg'),
-        bumpScale: 0.1 });
+        bumpScale: 0.1 
+    });
  
 	//criando a esfera
- 	var sphere = new THREE.Mesh(
+ 	moon = new THREE.Mesh(
  		new THREE.SphereGeometry(
  			radius,
  			segments,
@@ -136,12 +193,8 @@ function loadMoon() {
  		),
  		sphereMaterial
  	); 
-
- 	sphere.position.set(300, 1000, 300);
- 
+ 	
+ 	moon.position.set(700, 1800, 900);
 	//adicionando a esfera na cena
- 	scene.add(sphere);
-
- 	var ambientLight = new THREE.AmbientLight(0xbbbbbb);
-    scene.add(ambientLight);
+ 	scene.add(moon);
 }
