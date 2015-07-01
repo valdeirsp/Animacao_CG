@@ -68,7 +68,7 @@ function init() {
 	scene.add(light);
         
     //imagem dentro da skybox!
-	/*var floorTexture = new THREE.ImageUtils.loadTexture( 'images/checkerboard.jpg' );
+	var floorTexture = new THREE.ImageUtils.loadTexture( 'images/checkerboard.jpg' );
 	floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping; 
 	floorTexture.repeat.set( 10, 10 );
 	var floorMaterial = new THREE.MeshBasicMaterial( { map: floorTexture, side: THREE.DoubleSide } );
@@ -76,7 +76,7 @@ function init() {
 	var floor = new THREE.Mesh(floorGeometry, floorMaterial);
 	floor.position.y = -0.5;
 	floor.rotation.x = Math.PI / 2;
-	scene.add(floor);*/
+	scene.add(floor);
 	
 	/*
 	* Adiciona o skybox na cena
