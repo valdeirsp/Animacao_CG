@@ -1,0 +1,14 @@
+* {
+	margin: 0;
+	padding: 0;
+}
+
+html, body {
+	overflow : hidden;
+}
+
+#animabox {
+	position: absolute; 
+	left:0px; 
+	top:0px
+}
