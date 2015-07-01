@@ -1,5 +1,5 @@
 /*
-*	Grupo: ??
+*	Grupo: 5
 *	Membros: Gabriela de Jesus Martins 489689
 			 Valdeir Soares Perozim	   489786
 			 Vinnícius Ferreira
@@ -28,6 +28,8 @@ var container;
 
 var keyboard = new THREEx.KeyboardState();
 var clock = new THREE.Clock();
+
+var animating = false;
 
 function init() {
 	console.log ("Inicializando");
@@ -115,7 +117,6 @@ function init() {
 	*/
 	loadMoon();
 
-
 	//loadCannon();
 
 }
@@ -127,8 +128,10 @@ function animate() {
 }
 
 function update() {
-	if ( keyboard.pressed("z") ) { 
-		// Pode ser disparar a animação!
+	if ( keyboard.pressed("z") && ! animating ) { 
+		console.log('Iniciando a animação');
+		animating = true;
+		shot();
 	}
 	
 	controls.update();
@@ -151,8 +154,11 @@ function loadBullet() {
         
         bullet = new THREE.Mesh( geometry, material );
        	bullet.position.set(1000, -500, -600);
+       	bullet.rotateZ(-45);
     	bullet.scale.set(100, 100, 100);
     	scene.add( bullet );
+    	console.log('Posição da bala: ');
+    	console.log(bullet.position);
     });
 }
 
@@ -197,4 +203,30 @@ function loadMoon() {
  	moon.position.set(700, 1800, 900);
 	//adicionando a esfera na cena
  	scene.add(moon);
+ 	console.log('Posição da lua: ');
+ 	console.log(moon.position);
+}
+
+function shot() {
+
+	//Pontos de controle para a curva de bezier
+	var start = coord(bullet.position.x, bullet.position.y);
+	var end = coord(moon.position.x, moon.position.y);
+
+	var C1 = coord(bullet.position.x, bullet.position.y + 400);
+	var C2 = coord(moon.position.x, moon.position.y + 300);
+
+	var stage = 0;
+
+	while (stage < 1) {
+		var curpos = getBezier(stage, start, C1, C2, end);
+
+		bullet.position.set(curpos.x, curpos.y, bullet.position.z + (stage * 100));
+
+		stage += 0.2;
+
+		console.log(bullet.position);
+	}
+	
+	animating = false;
 }
