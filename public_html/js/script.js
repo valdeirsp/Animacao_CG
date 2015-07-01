@@ -1,37 +1,34 @@
 /*
 *	Grupo: ??
+*	Membros: Gabriela de Jesus Martins 489689
+			 Valdeir Soares Perozim	   489786
+			 Vinnícius Ferreira
+*
 *	script.js
 *	21/06/2015
 *
-*	Seguindo o tutorial de:
+*	Seguindo os tutoriais de:
 *	http://adrianomaciel.ninja/tutoriais/1o-tutorial-pratico-com-three-js
 *	http://threejs.org/docs/index.html#Manual/Introduction/Creating_a_scene
 */
-
-/*var anima {
-	scene : null,
-	camera: null,
-	renderer: null
-}*/
 
 /* Variáveis básicas para compor uma aplicação com Three.js */
 var scene,
 	camera,
 	renderer;
 
-var controls,
-	stats;
+var controls;
 
 // Elemento que conterá o canvas
 var container; 
 
-var cubo;
 var keyboard = new THREEx.KeyboardState();
 var clock = new THREE.Clock();
 
 function init() {
 	console.log ("Inicializando");
 	debugger;
+
 	/*
 	* Preparação da cena
 	*/
@@ -42,7 +39,6 @@ function init() {
 	/*
 	* Definindo os parâmetros da câmera
 	*/
-
 	//FOV: % de abertura da camera, de 0 .. 100
 	var FOV = 100, 
 		NEAR = 0.1,
@@ -63,15 +59,8 @@ function init() {
 	THREEx.WindowResize(renderer, camera);
 	THREEx.FullScreen.bindKey({ charCode : 'm'.charCodeAt(0) });
 	
-	// CONTROLS
+	/* Instala os controles da câmera, permitindo navegar na cena */
 	controls = new THREE.OrbitControls( camera, renderer.domElement );
-	
-	// STATS
-	stats = new Stats();
-	stats.domElement.style.position = 'absolute';
-	stats.domElement.style.bottom = '0px';
-	stats.domElement.style.zIndex = 100;
-	container.appendChild( stats.domElement );
 	
 	// LIGHT
 	var light = new THREE.PointLight(0xffffff);
@@ -89,8 +78,9 @@ function init() {
 	floor.rotation.x = Math.PI / 2;
 	scene.add(floor);*/
 	
-	////////////
-	// CUSTOM //
+	/*
+	* Adiciona o skybox na cena
+	*/
 	var directions  = ["esquerdo", "direito", "ceu", "solo", "tras", "frente"];
 	var imageSuffix = ".png";
 	var skyGeometry = new THREE.CubeGeometry( 5000, 5000, 5000 );	
@@ -103,7 +93,9 @@ function init() {
 		}));
 	var skyMaterial = new THREE.MeshFaceMaterial( materialArray );
 	var skyBox = new THREE.Mesh( skyGeometry, skyMaterial );
-	scene.add( skyBox );	
+	scene.add( skyBox );
+
+	loadMoon();
 }
 
 function animate() {
@@ -118,9 +110,38 @@ function update() {
 	}
 	
 	controls.update();
-	stats.update();
 }
 
 function render() {
 	renderer.render( scene, camera );
+}
+
+function loadMoon() {
+	//configurando as variáveis da esfera
+ 	var radius = 50,
+ 		segments = 16,
+ 		rings = 16;
+ 
+	//criando o material da esfera, inicialmente será apenas o wireframe
+ 	var sphereMaterial = new THREE.MeshLambertMaterial({
+        map: THREE.ImageUtils.loadTexture('model/texturaLua.jpg'),
+        bumpScale: 0.1 });
+ 
+	//criando a esfera
+ 	var sphere = new THREE.Mesh(
+ 		new THREE.SphereGeometry(
+ 			radius,
+ 			segments,
+ 			rings
+ 		),
+ 		sphereMaterial
+ 	); 
+
+ 	sphere.position.set(300, 1000, 300);
+ 
+	//adicionando a esfera na cena
+ 	scene.add(sphere);
+
+ 	var ambientLight = new THREE.AmbientLight(0xbbbbbb);
+    scene.add(ambientLight);
 }
