@@ -30,6 +30,7 @@ var keyboard = new THREEx.KeyboardState();
 var clock = new THREE.Clock();
 
 var animating = false;
+var cannonmoved = false;
 
 function init() {
 	console.log ("Inicializando");
@@ -72,17 +73,6 @@ function init() {
 	light.position.set(0,250,0);
 	scene.add(light);
         
-    //imagem dentro da skybox!
-	/*var floorTexture = new THREE.ImageUtils.loadTexture( 'images/checkerboard.jpg' );
-	floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping; 
-	floorTexture.repeat.set( 10, 10 );
-	var floorMaterial = new THREE.MeshBasicMaterial( { map: floorTexture, side: THREE.DoubleSide } );
-	var floorGeometry = new THREE.PlaneGeometry(100, 100, 10, 10);
-	var floor = new THREE.Mesh(floorGeometry, floorMaterial);
-	floor.position.y = -0.5;
-	floor.rotation.x = Math.PI / 2;
-	scene.add(floor);*/
-	
 	/*
 	* Adiciona o skybox na cena
 	*/
@@ -117,7 +107,7 @@ function init() {
 	*/
 	loadMoon();
 
-	//loadCannon();
+	loadCannon();
 
 }
 
@@ -129,13 +119,18 @@ function animate() {
 
 function update() {
 	if ( keyboard.pressed("z") && ! animating ) { 
+		//collisionDetector();
 		console.log('Iniciando a animação');
 		animating = true;
+		if (cannonmoved == false) {
+			cannonmoved = true;
+			cannon.position.x -= 115;
+		}
 		shot();
 	}
 	
 	controls.update();
-	cannonControls.update();
+	//cannonControls.update();
 }
 
 function render() {
@@ -165,17 +160,25 @@ function loadBullet() {
 function loadCannon() {
 
 	var cannonLoader = new THREE.JSONLoader();
-	var cannon;
 
     cannonLoader.load('model/cannon.json', function ( geometry ) {
-    	var material = new THREE.MeshBasicMaterial();
+    	material = new THREE.MeshPhongMaterial({
+        	color: 0x131314,
+        	shininess: 100.0,
+        	ambient: 0x131314,
+        	emissive: 0x111111,
+        	specular: 0xbbbbbb
+      	});
         
         cannon = new THREE.Mesh( geometry, material );
-
-        cannon.position.set(-500, -500, -50);
+       
+        cannon.position.set(100, -500, -600);
+        cannon.rotateY(110);
     	cannon.scale.set(180, 180, 180);
+        
     	scene.add( cannon );
-    	cannonControls = new THREE.OrbitControls( cannon, renderer.domElement );
+       
+        //cannonControls = new THREE.OrbitControls( cannon, renderer.domElement );
     });
 }
 
@@ -217,7 +220,6 @@ function shot() {
 	var C2 = coord(moon.position.x, moon.position.y + 300);
 
 	var stage = 0;
-
 	while (stage < 1) {
 		var curpos = getBezier(stage, start, C1, C2, end);
 
@@ -225,8 +227,19 @@ function shot() {
 
 		stage += 0.2;
 
+		console.log('Stage atual: ');
+		console.log(stage);
+		console.log(curpos);
 		console.log(bullet.position);
 	}
 	
 	animating = false;
+}
+
+function collisionDetector() {
+	
+	if (bullet.position.x == moon.position.x &&
+		bullet.position.y == moon.position.y) {
+		console.log('Colidiu!!');
+	}
 }
