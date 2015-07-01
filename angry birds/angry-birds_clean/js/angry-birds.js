@@ -9,7 +9,7 @@ var $ = $ || function (id) {
 
     AngryBirds.Texture = {
         BULLET: THREE.ImageUtils.loadTexture('image/bullet.jpg'),
-        BOARD: THREE.ImageUtils.loadTexture('image/board.jpg'),
+        BOARD: THREE.ImageUtils.loadTexture('image/launcher.jpg'),
         POST: THREE.ImageUtils.loadTexture('image/post.jpg'),
         LEATHER: THREE.ImageUtils.loadTexture('image/leather.png'),
         get GRASS() {
@@ -48,7 +48,6 @@ var $ = $ || function (id) {
     AngryBirds.Stage = function () {
         this.game = null;
         this.index = 0;
-//        this.bodies = [];
     };
 
     AngryBirds.Stage.prototype = {
@@ -61,7 +60,6 @@ var $ = $ || function (id) {
             }
             var box = new C3.Box(size.width, size.height, size.depth, opts);
             box.position.copy(position);
-//            this.bodies.push(box);
             return box;
         },
         //APAGAR APÓS ADICIONAR A LUA
@@ -71,22 +69,11 @@ var $ = $ || function (id) {
                 opts.map = AngryBirds.Texture.BOARD;
             return this.createBox(size, position, opts);
         },
-        createPost: function (size, position, opts) {
-            opts = opts || {};
-            if (!opts.map && !opts.color)
-                opts.map = AngryBirds.Texture.POST;
-            return this.createBox(size, position, opts);
-        },
         destructFromFrom: function (world) {
             this.bodies.forEach(function (body) {
                 world.bodies.splice(world.bodies.indexOf(body), 1);
                 world.cannonWorld.remove(body.cannonBody);
                 world.threeScene.remove(body.threeMesh);
-            });
-            this.piggies.forEach(function (piggy) {
-                world.bodies.splice(world.bodies.indexOf(piggy), 1);
-                world.cannonWorld.remove(piggy.cannonBody);
-                world.threeScene.remove(piggy.threeMesh);
             });
         },
     };
@@ -94,7 +81,6 @@ var $ = $ || function (id) {
     AngryBirds.Game = function (opts) {
         if (!opts.stages)
             throw 'stages is the mandatory option.';
-        this.shotCount = 0;
         this.stages = opts.stages;
         this.stages.forEach(function (stage, index) {
             stage.game = this;
@@ -103,21 +89,20 @@ var $ = $ || function (id) {
         this.currentStageNo = 0;
         this.setting = new AngryBirds.Setting(opts.density);
         this.setGameMode(AngryBirds.GameMode.TITLE);
-        this.setViewMode(AngryBirds.ViewMode.BULLETVIEW);
+        this.setViewMode(AngryBirds.ViewMode.SIDEVIEW);
         this.world = null;
         this.skybox = null;
-        this.slingshot = null;
+        this.launcher = null;
         this.ground = null;
         this.bullet = null;
-        this.bulletStartPosition = new THREE.Vector3(0, 2.5/*bar*/ + 2/*arm*/ + 0.1, 0);
-        this.piggy = null;
+        this.bulletStartPosition = new THREE.Vector3(0, 5, 3);
         this.tracks = [];
 
-        this.isBirdDragging = false;
+        this.isBulletDragging = false;
         this.isWorldDragging = false;
         this.dragStartMousePosition = null;
         this.projector = new THREE.Projector();
-        this.nextStageTimer = null;
+//        this.nextStageTimer = null;
     };
 
     AngryBirds.Game.prototype = {
@@ -139,61 +124,15 @@ var $ = $ || function (id) {
             this.ground = new C3.Ground({map: AngryBirds.Texture.GRASS});
             this.world.add(this.ground);
 
-            // slingshot
-            this.slingshot = this.createSlingshotMesh();
-            this.world.threeScene.add(this.slingshot);
+            // launcher
+            this.launcher = this.createSlingshotMesh();
+            this.world.threeScene.add(this.launcher);
 
             // bullet
-            this.bullet = this.createBird();
+            this.bullet = this.createBullet();
             this.bullet.position.copy(this.bulletStartPosition);
             this.bullet.quaternion.setFromAxisAngle(new THREE.Vector3(0, 1, 0), -Math.PI / 2);
             this.world.add(this.bullet);
-
-            // rubber - elastico do estilingue
-            var leftRubberGeometry = new THREE.Geometry();
-            var basePoint = new THREE.Vector3();
-            basePoint.y = 2 + 2.5 + 0.2 - 0.1;
-            basePoint.x = 2 - 0.2;
-            leftRubberGeometry.vertices.push(basePoint);
-            leftRubberGeometry.vertices.push(new THREE.Vector3(
-                    this.bullet.position.x + 0.5,
-                    this.bullet.position.y,
-                    this.bullet.position.z
-                    ));
-            this.leftRubber = new THREE.Line(leftRubberGeometry, new THREE.LineBasicMaterial({
-                color: 0x999966,
-                linewidth: 5
-            }));
-            this.world.threeScene.add(this.leftRubber);
-
-            var rightRubberGeometry = new THREE.Geometry();
-            var basePoint = new THREE.Vector3();
-            basePoint.y = 2 + 2.5 + 0.2 - 0.1;
-            basePoint.x = -2 + 0.2;
-            rightRubberGeometry.vertices.push(basePoint);
-            rightRubberGeometry.vertices.push(new THREE.Vector3(
-                    this.bullet.position.x - 0.5,
-                    this.bullet.position.y,
-                    this.bullet.position.z
-                    ));
-            this.rightRubber = new THREE.Line(rightRubberGeometry, new THREE.LineBasicMaterial({
-                color: 0x999966,
-                linewidth: 5
-            }));
-            this.world.threeScene.add(this.rightRubber);
-
-            var pouchGeometry = new THREE.SphereGeometry(0.55, 8, 6, 0, Math.PI, -Math.PI / 2 + Math.PI / 8, -Math.PI / 4);
-            var pouchMaterial = new THREE.MeshPhongMaterial({
-                map: AngryBirds.Texture.LEATHER,
-                ambient: 0x999999,
-                side: THREE.DoubleSide,
-                transparent: true,
-                blending: THREE.NormalBlending,
-                depthTest: false
-            });
-            this.pouch = new THREE.Mesh(pouchGeometry, pouchMaterial);
-            this.pouch.position.copy(this.bulletStartPosition);
-            this.world.threeScene.add(this.pouch);
 
             this.constructStage();
         },
@@ -245,7 +184,7 @@ var $ = $ || function (id) {
                     );
         },
         
-        createBird: function (world) {
+        createBullet: function (world) {
             var bullet = new C3.Sphere(0.5, {
                 mass: 1.1,
                 angularDamping: 0.8,
@@ -266,26 +205,21 @@ var $ = $ || function (id) {
             stage.constructOn(this.world);
 //            stage.setupEventListeners();
         },
+        //cria o lançador.
         createSlingshotMesh: function () {
-            var slingshotGeometry = new THREE.Geometry();
-            var barGeometry = new THREE.CylinderGeometry(0.2, 0.2, 2.5, 8);
+            var launcherGeometry = new THREE.Geometry();
+            var barGeometry = new THREE.CylinderGeometry(0.4, 0.4, 15, 10);
             var bar = new THREE.Mesh(barGeometry);
             bar.position.set(0, 2.5 / 2, 0);
 
-            var armGeometry = new THREE.TorusGeometry(2, 0.2, 8, 16, Math.PI);
-            var arm = new THREE.Mesh(armGeometry);
-            arm.position.set(0, 2.5 + 2 + 0.2 - 0.03, 0);
-            arm.quaternion.setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.PI);
-
-            THREE.GeometryUtils.merge(slingshotGeometry, bar);
-            THREE.GeometryUtils.merge(slingshotGeometry, arm);
-            var slingshot = new THREE.Mesh(slingshotGeometry, new THREE.MeshPhongMaterial({
+            THREE.GeometryUtils.merge(launcherGeometry, bar);
+            var launcher = new THREE.Mesh(launcherGeometry, new THREE.MeshPhongMaterial({
                 map: AngryBirds.Texture.BOARD,
                 transparent: true,
                 blending: THREE.NormalBlending
             }));
-            slingshot.castShadow = true;
-            return slingshot;
+            launcher.castShadow = true;
+            return launcher;
         },
 //adiciona um tracejado marcando o caminho que o ultimo passaro fez
         addTrack: function () {
@@ -308,35 +242,6 @@ var $ = $ || function (id) {
                 this.world.threeScene.remove(track);
             }.bind(this));
             this.tracks = [];
-        },
-        addSmoke: function (piggy) {
-            var maxRad = 2;
-            var geometry = new THREE.Geometry();
-            for (var i = 0; i < 5000; i++) {
-                var rad = Math.random() * maxRad;
-                var angleY = Math.random() * 2 * Math.PI;
-                var angleX = Math.random() * Math.PI;
-                var point = new THREE.Vector3(
-                        rad * Math.sin(angleY) * Math.cos(angleX),
-                        rad * Math.cos(angleY) * Math.cos(angleX),
-                        rad * Math.sin(angleY) * Math.sin(angleX)
-                        );
-                geometry.vertices.push(point);
-            }
-            var material = new THREE.ParticleBasicMaterial({
-                size: 0.01,
-                color: 0x88ff88,
-                blending: THREE.AdditiveBlending,
-                transparent: true
-            });
-            var mesh = new THREE.ParticleSystem(geometry, material);
-            mesh.position.copy(piggy.threeMesh.position);
-            mesh.sortParticles = false;
-            this.world.threeScene.add(mesh);
-
-            setTimeout(function () {
-                this.world.threeScene.remove(mesh);
-            }.bind(this), 2500);
         },
         setGameMode: function (gameMode) {
             this.gameMode = gameMode;
@@ -385,14 +290,14 @@ var $ = $ || function (id) {
                 this.cameraDirection.copy(backupCameraDirection);
                 return;
             }
-            this.world.threeCamera.position.copy(new THREE.Vector3().copy(this.bullet.threeMesh.position).sub(this.cameraDirection));
+            this.world.threeCamera.position.copy(new THREE.Vector3().copy(this.bullet.threeMesh.position));
             this.world.threeCamera.lookAt(this.bullet.threeMesh.position);
         },
 //arrasta o passaro
-        dragBird: function (event) {
+        dragBullet: function (event) {
             event.preventDefault();
             var currentMousePosition = new THREE.Vector3(event.clientX, event.clientY, 0);
-            var dist = this.dragStartMousePosition.distanceTo(currentMousePosition) / 600;
+            var dist = this.dragStartMousePosition.distanceTo(currentMousePosition);
             if (0.4 < dist)
                 dist = 0.4;
 
@@ -418,18 +323,11 @@ var $ = $ || function (id) {
         },
         // TODO
         clearStage: function (stage) {
-            this.clearNextStageTimer();
             this.removeTracks();
             this.setGameMode(AngryBirds.GameMode.CLEAR_STAGE);
             var nextStageIndex = stage.index + 1;
-            if (this.stages.length <= nextStageIndex) {
-                if (this.isHiScore(this.shotCount)) {
-                    this.setHiScore(this.shotCount);
-                }
-            }
-            document.getElementById('stage-id').textContent = nextStageIndex;
-            document.getElementById('stage-clear').className = 'show';
         },
+        //quando segura o mouse
         mouseDownListener: function (event) {
             if (this.gameMode != AngryBirds.GameMode.SIGHT_SETTING)
                 return;
@@ -446,34 +344,36 @@ var $ = $ || function (id) {
             var intersects = ray.intersectObjects([this.bullet.threeMesh]);
 
             if (0 < intersects.length) {
-                this.isBirdDragging = true;
+                this.isBulletDragging = true;
                 this.isWorldDragging = false;
             }
             else {
-                this.isBirdDragging = false;
+                this.isBulletDragging = false;
                 if (this.viewMode == AngryBirds.ViewMode.BULLETVIEW) {
                     this.isWorldDragging = true;
                 }
             }
         },
+        //quando move o o mouse segurando o botão
         mouseMoveListener: function (event) {
             if (this.gameMode != AngryBirds.GameMode.SIGHT_SETTING)
                 return;
 
-            if (this.isBirdDragging) {
-                this.dragBird(event);
+            if (this.isBulletDragging) {
+                this.dragBullet(event);
             }
             else if (this.isWorldDragging) {
                 this.dragWorld(event);
             }
         },
+        //quando solta o mouse
         mouseUpListener: function (event) {
             if (this.gameMode != AngryBirds.GameMode.SIGHT_SETTING)
                 return;
 
-            if (this.isBirdDragging) {
-                this.isBirdDragging = false;
-                var dist = this.dragBird(event);
+            if (this.isBulletDragging) {
+                this.isBulletDragging = false;
+                var dist = this.dragBullet(event);
 
                 var f = dist * 4000;
                 var dt = 1 / 60;
@@ -549,7 +449,7 @@ var $ = $ || function (id) {
         ready: function () {
             this.setGameMode(AngryBirds.GameMode.SIGHT_SETTING);
             this.setViewMode(AngryBirds.ViewMode.BULLETVIEW);
-            this.isBirdDragging = false;
+            this.isBulletDragging = false;
             this.isWorldDragging = false;
             this.bullet.cannonBody.velocity.set(0, 0, 0);
             this.bullet.position.copy(this.bulletStartPosition);
@@ -557,7 +457,7 @@ var $ = $ || function (id) {
             this.cameraDirection = new THREE.Vector3(0, 0, 5);
             this.world.threeCamera.position.copy(new THREE.Vector3().copy(this.bullet.threeMesh.position).sub(this.cameraDirection));
             this.world.threeCamera.lookAt(this.bullet.threeMesh.position);
-            this.slingshot.lookAt(new THREE.Vector3(0, 0, 1).add(this.slingshot.position));
+            this.launcher.lookAt(new THREE.Vector3(0,-1, 1).add(this.launcher.position));
         },
         start: function (isRestart) {
             this.construct();
@@ -572,73 +472,30 @@ var $ = $ || function (id) {
                     step += 1;
                     var angle = step * 180 / Math.PI / 5000;
                     var radius = 12 + 2 * Math.sin(angle / 3);
-                    this.world.threeCamera.position.set(0 + radius * Math.cos(angle), 7 + 3 * Math.cos(angle * 2), 43 + radius * Math.sin(angle));
-                    this.world.threeCamera.lookAt(new THREE.Vector3(0, 5, 48));
+                    this.world.threeCamera.position.set(0 + radius * Math.cos(angle), 20 + radius * Math.cos(angle * 2), 15 + radius * Math.sin(angle));
+                    this.world.threeCamera.lookAt(new THREE.Vector3(0, 10, 60));
                 }
                 //mundo com a camera no passaro
                 else if (this.viewMode === AngryBirds.ViewMode.BULLETVIEW) {
                     this.bullet.threeMesh.material.opacity = 0.5;
 
-                    if (this.gameMode === AngryBirds.GameMode.SIGHT_SETTING) {
-                        this.slingshot.material.opacity = 0.5;
-                        this.pouch.material.opacity = 0.5;
-                        var behindBird = new THREE.Vector3().copy(this.bullet.threeMesh.position
-                                ).sub(this.cameraDirection);
-                        this.world.threeCamera.position.copy(behindBird);
-                        this.world.threeCamera.lookAt(this.bullet.threeMesh.position);
-                    }
-                    else if (this.getCurrentStage().piggies.length != 0) {
-                        this.slingshot.material.opacity = 1;
-                        this.pouch.material.opacity = 1;
-                        this.world.threeCamera.position.copy(this.bullet.threeMesh.position);
-                        // TODO: piggiesの重心とかにする？
-                        this.world.threeCamera.lookAt(this.getCurrentStage().piggies[0].threeMesh.position);
-                    }
+//                    if (this.gameMode === AngryBirds.GameMode.SIGHT_SETTING) {
+                        this.launcher.material.opacity = 0.5;
+                        var behindBullet = 
+                                new THREE.Vector3().copy(this.bullet.threeMesh.position).sub(this.cameraDirection);
+                        this.world.threeCamera.position.copy(behindBullet);
+                        this.world.threeCamera.lookAt(new THREE.Vector3(0, 30, 50));
+//                    }
                 }
                 //mundo com a camera na lateral
                 else if (this.viewMode === AngryBirds.ViewMode.SIDEVIEW) {
                     this.bullet.threeMesh.material.opacity = 1;
-                    this.slingshot.material.opacity = 1;
-                    this.pouch.material.opacity = 1;
-                    this.world.threeCamera.position.set(-35, 15, 30);
-                    this.world.threeCamera.lookAt(new THREE.Vector3(0, 5, 30));
-                }
-
-                //posiciona os elasticos a bolsa do estilingue de acordo a direção do passaro
-                if (0 < this.bullet.threeMesh.position.z) {
-                    this.leftRubber.geometry.vertices[1].set(
-                            0.55,
-                            this.leftRubber.geometry.vertices[0].y,
-                            0
-                            );
-                    this.rightRubber.geometry.vertices[1].set(
-                            -0.55,
-                            this.rightRubber.geometry.vertices[0].y,
-                            0
-                            );
-                    this.pouch.position.set(
-                            0,
-                            this.rightRubber.geometry.vertices[0].y,
-                            0
-                            );
-                }
-                else {
-                    this.leftRubber.geometry.vertices[1].set(
-                            this.bullet.threeMesh.position.x + 0.5,
-                            this.bullet.threeMesh.position.y,
-                            this.bullet.threeMesh.position.z
-                            );
-                    this.rightRubber.geometry.vertices[1].set(
-                            this.bullet.threeMesh.position.x - 0.5,
-                            this.bullet.threeMesh.position.y,
-                            this.bullet.threeMesh.position.z
-                            );
-                    this.pouch.position.copy(this.bullet.threeMesh.position);
-                }
-
-                this.leftRubber.geometry.verticesNeedUpdate = true;
-                this.rightRubber.geometry.verticesNeedUpdate = true;
-
+                    
+                    this.launcher.material.opacity = 1;
+                    this.world.threeCamera.position.set(-35, 15 , 25);
+                    this.world.threeCamera.lookAt(new THREE.Vector3(5,15, 30));
+                };
+                
                 //se o passaro estiver voando já vai traçando o caminho que ele fez
                 if (this.gameMode === AngryBirds.GameMode.FLYING) {
                     this.addTrack();
