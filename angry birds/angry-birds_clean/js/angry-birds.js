@@ -9,13 +9,9 @@ var $ = $ || function (id) {
 
     AngryBirds.Texture = {
         BULLET: THREE.ImageUtils.loadTexture('image/bullet.jpg'),
-        PIGGY: THREE.ImageUtils.loadTexture('image/pig.jpg'),
         BOARD: THREE.ImageUtils.loadTexture('image/board.jpg'),
         POST: THREE.ImageUtils.loadTexture('image/post.jpg'),
-        ICE: THREE.ImageUtils.loadTexture('image/ice.jpg'),
         LEATHER: THREE.ImageUtils.loadTexture('image/leather.png'),
-        CLOD: THREE.ImageUtils.loadTexture('image/brick_closeup_5132569.JPG'),
-        ROCK: THREE.ImageUtils.loadTexture('image/RockSmooth0076_5_thumblarge.jpg'),
         get GRASS() {
             if (!this._GRASS) {
                 this._GRASS = THREE.ImageUtils.loadTexture('image/grass_grass_0100_02_preview.jpg');
@@ -52,8 +48,7 @@ var $ = $ || function (id) {
     AngryBirds.Stage = function () {
         this.game = null;
         this.index = 0;
-        this.piggies = [];
-        this.bodies = [];
+//        this.bodies = [];
     };
 
     AngryBirds.Stage.prototype = {
@@ -66,9 +61,10 @@ var $ = $ || function (id) {
             }
             var box = new C3.Box(size.width, size.height, size.depth, opts);
             box.position.copy(position);
-            this.bodies.push(box);
+//            this.bodies.push(box);
             return box;
         },
+        //APAGAR APÓS ADICIONAR A LUA
         createBoard: function (size, position, opts) {
             opts = opts || {};
             if (!opts.map && !opts.color)
